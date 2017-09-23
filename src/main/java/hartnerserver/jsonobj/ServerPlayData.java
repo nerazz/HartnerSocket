@@ -8,11 +8,16 @@ import hartnerserver.enums.ServerEvent;
  */
 public class ServerPlayData {
 	public Player[] players;
-	public ServerEvent[] events;
+	public InServerEvent[] events;
 
 	public static class Player {
 		public int life;
 		public boolean hard;
 		public PlayerEvent[] events;
+	}
+
+	public static class InServerEvent {
+		public ServerEvent event;
+		public Object info;//TODO: wirklich nur Object?
 	}
 }

@@ -20,7 +20,6 @@ public class ClientHandler {
 	public void onClose(int statusCode, String reason) {
 		System.out.println("Close: statusCode=" + statusCode + ", reason=" + reason);
 		LobbyHandler.INSTANCE.getLobby(PLAYER.getLobbyId()).leave(PLAYER);//TODO: besser
-		DbLink.changePlayers(PLAYER.getLobbyId(), "dec");//TODO: in lobby verlagern
 	}
 
 	@OnWebSocketError

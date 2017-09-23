@@ -7,5 +7,6 @@ public enum GameState {
 	ERROR,
 	INIT,
 	LOBBY,
-	PLAY
+	PLAY,
+	END
 }

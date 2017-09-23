@@ -1,5 +1,7 @@
 package hartnerserver;
 
+import hartnerserver.util.DbLink;
+
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -17,7 +19,7 @@ public enum LobbyHandler {
 	}
 
 	public Lobby createLobby(Integer id, int size) {
-		Lobby lobby = new Lobby(size);
+		Lobby lobby = new Lobby(id, size);
 		System.out.println("created new lobby ID: " + id);
 		LOBBY_LIST.put(id, lobby);
 		return lobby;
@@ -27,6 +29,7 @@ public enum LobbyHandler {
 		//Lobby lobby = LOBBY_LIST.get(id);
 		//lobby.stopTimer();//stoppt lobby ihren eigenen timer automatisch?
 		LOBBY_LIST.remove(id);
+		DbLink.closeLobby(id);
 	}
 
 }

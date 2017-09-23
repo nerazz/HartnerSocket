@@ -1,7 +1,9 @@
 package hartnerserver;
 
 import com.google.gson.Gson;
+import hartnerserver.enums.GameState;
 import hartnerserver.enums.PlayerEvent;
+import hartnerserver.enums.PlayerState;
 import hartnerserver.enums.ServerEvent;
 import hartnerserver.jsonobj.ServerPlayData;
 
@@ -45,32 +47,40 @@ public class Timer implements Runnable {//TODO: umbenennen; fields aufräumen
 	public void run() {
 		try {
 			for (Player player : players) {
+				if (player.getPlayerState() == PlayerState.LOST) {
+					continue;
+				}
 				if (player.isHard()) {
 					player.subLife(5);
 				}
-				Rock rock;
-				for (Iterator<Rock> it = ROCKS.iterator(); it.hasNext();) {//TODO: benchmarken; timer kommt mir komisch vor
-					rock = it.next();
-					if (rock.getTimeUntilHit() <= 0) {
+			}
+
+			Rock rock;
+			for (Iterator<Rock> it = ROCKS.iterator(); it.hasNext();) {//TODO: benchmarken; timer kommt mir komisch vor
+				rock = it.next();
+				if (rock.checkHit()) {
+					for (Player player : players) {
+						if (player.getPlayerState() == PlayerState.LOST) {
+							continue;
+						}
 						if (!player.isHard()) {
 							player.subLife(100);
-							PLAYER_EVENTS.get(player.getSlot()).add(PlayerEvent.HIT);
+							PLAYER_EVENTS.get(player.getSlot()).add(PlayerEvent.HIT);//FIXME: für player0
 						} else {
 							PLAYER_EVENTS.get(player.getSlot()).add(PlayerEvent.BLOCK);
 						}
-						it.remove();
-					} else {
-						rock.fly();
 					}
+					it.remove();
 				}
-
 			}
 
-
+			Long spawnHit = 0L;//TODO: besser
 			if (count % DIVIDER == 0) {
 				if (Math.random() > 0.7) {//TODO: use nextInt()
-					ROCKS.add(new Rock());
+					rock = new Rock();
+					ROCKS.add(rock);
 					SERVER_EVENTS.add(ServerEvent.SPAWN);
+					spawnHit = rock.getHIT_TIME();
 				}
 			}
 
@@ -89,8 +99,14 @@ public class Timer implements Runnable {//TODO: umbenennen; fields aufräumen
 				PlayerEvent[] playerEvents = new PlayerEvent[PLAYER_EVENTS.get(i).size()];//TODO: besser
 				spd.players[i].events = PLAYER_EVENTS.get(i).toArray(playerEvents);
 			}
-			ServerEvent[] serverEvents = new ServerEvent[SERVER_EVENTS.size()];
-			spd.events = SERVER_EVENTS.toArray(serverEvents);
+
+			ServerPlayData.InServerEvent[] inSE = new ServerPlayData.InServerEvent[SERVER_EVENTS.size()];
+			for (int i = 0; i < SERVER_EVENTS.size(); i++) {
+				inSE[i] = new ServerPlayData.InServerEvent();
+				inSE[i].event = SERVER_EVENTS.get(i);
+				inSE[i].info = spawnHit;//TODO: besser (siehe spawnhit)
+			}
+			spd.events = inSE;
 
 			LOBBY.sendToPlayers(GSON.toJson(spd));
 
@@ -98,6 +114,9 @@ public class Timer implements Runnable {//TODO: umbenennen; fields aufräumen
 				list.clear();
 			}
 			SERVER_EVENTS.clear();
+			if (LOBBY.getCurrentGameState() == GameState.END) {
+				LOBBY.endGame();
+			}
 
 			count++;
 		} catch(Exception e) {

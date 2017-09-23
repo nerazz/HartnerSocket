@@ -6,7 +6,6 @@ import hartnerserver.jsonobj.ClientInitData;
 import hartnerserver.jsonobj.ClientLobbyData;
 import hartnerserver.enums.PlayerState;
 import hartnerserver.jsonobj.ClientPlayData;
-import hartnerserver.jsonobj.GameStateChanger;
 import hartnerserver.util.DbLink;
 import org.eclipse.jetty.websocket.api.RemoteEndpoint;
 import org.eclipse.jetty.websocket.api.Session;
@@ -34,13 +33,18 @@ public class Player {//TODO: fields aufräumen
 
 	private int life = 1000;
 	private boolean hard;
-	private PlayerState gameState = PlayerState.PLAYING;
+	private PlayerState playerState = PlayerState.PLAYING;
+	private int place;
 
 	private void init(int ID, String NAME, int LOBBY_ID) {
 		this.ID = ID;
 		this.NAME = NAME;
 		this.LOBBY_ID = LOBBY_ID;
 		//lobby = LobbyHandler.INSTANCE.getLobby(LOBBY_ID);TODO: hier initen?
+	}
+
+	public int getId() {
+		return ID;
 	}
 
 	public String getName() {
@@ -66,8 +70,9 @@ public class Player {//TODO: fields aufräumen
 	public void subLife(int life) {
 		this.life -= life;
 		if (this.life <= 0) {
-			gameState = PlayerState.LOST;
+			playerState = PlayerState.LOST;
 			System.out.println("Player " + slot + " lost!");
+			lobby.setPlaceOfPlayer(this);
 		}
 		modified = true;
 	}
@@ -76,8 +81,8 @@ public class Player {//TODO: fields aufräumen
 		return hard;
 	}
 
-	public PlayerState getGameState() {
-		return gameState;
+	public PlayerState getPlayerState() {
+		return playerState;
 	}
 
 	public void setSession(Session session) {
@@ -100,6 +105,14 @@ public class Player {//TODO: fields aufräumen
 
 	public boolean isModified() {
 		return modified;
+	}
+
+	public int getPlace() {
+		return place;
+	}
+
+	public void setPlace(int place) {
+		this.place = place;
 	}
 
 	public void send(String message) {
@@ -174,7 +187,6 @@ public class Player {//TODO: fields aufräumen
 	private void evaluateInitData(String data) {
 		ClientInitData cid = GSON.fromJson(data, ClientInitData.class);
 		init(cid.ID, cid.NAME, cid.LOBBY_ID);
-		DbLink.changePlayers(getLobbyId(), "inc");
 
 		LobbyHandler lobbyHandler = LobbyHandler.INSTANCE;
 		Lobby lobby = lobbyHandler.getLobby(getLobbyId());

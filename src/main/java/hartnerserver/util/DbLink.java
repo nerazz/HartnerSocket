@@ -21,19 +21,11 @@ public class DbLink {
 
 	private DbLink() {}
 
-	public static void changePlayers(int lobbyId, String modification) {
-		String query;
-		if (modification.toLowerCase().equals("inc")) {
-			query = "UPDATE Hartner SET players = players + 1 WHERE id = ?";
-
-		} else if (modification.toLowerCase().equals("dec")) {
-			query = "UPDATE Hartner SET players = players - 1 WHERE id = ?";
-		} else {
-			System.out.println("error in changePlayers!");
-			return;
-		}
+	public static void changePlayers(int lobbyId, int players) {
+		String query = "UPDATE Hartner SET players = ? WHERE id = ?";
 		try (Connection link = DATA_SOURCE.getConnection(); PreparedStatement ps = link.prepareStatement(query)) {
-			ps.setInt(1, lobbyId);
+			ps.setInt(1, players);
+			ps.setInt(2, lobbyId);
 			ps.executeUpdate();
 			link.commit();
 		} catch (SQLException e) {
@@ -57,5 +49,16 @@ public class DbLink {
 			e.printStackTrace();
 		}
 		return -1;
+	}
+
+	public static void closeLobby(int lobbyId) {
+		String query = "DELETE FROM Hartner WHERE id = ?";
+		try (Connection link = DATA_SOURCE.getConnection(); PreparedStatement ps = link.prepareStatement(query)) {
+			ps.setInt(1, lobbyId);
+			ps.executeUpdate();
+			link.commit();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
 	}
 }
